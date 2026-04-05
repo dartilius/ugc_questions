@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% block title %}Редактировать опрос: {{ survey.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-9">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Редактировать опрос</h5>
+        </div>
+        <div class="card-body">
+          <form method="post" id="survey-form">
+            {% csrf_token %}
+
+            <!-- Основная форма -->
+            <div class="mb-4">
+              <label for="{{ form.title.id_for_label }}" class="form-label">
+                Название опроса *
+              </label>
+              {{ form.title }}
+              {% if form.title.errors %}
+                <div class="text-danger small">{{ form.title.errors }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Формсет вопросов -->
+            <h6 class="mb-3">Вопросы (минимум 3)</h6>
+            {{ question_formset.management_form }}
+
+            <div id="questions-container">
+              {% for question_form in question_formset %}
+                <div class="question-form border p-3 mb-3 bg-light rounded"
+                     data-question-index="{{ forloop.counter0 }}">
+                  <!-- Удаление вопроса -->
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <strong>Вопрос #{{ forloop.counter }}</strong>
+                    {% if forloop.counter > 3 %}
+                      <button type="button" class="btn btn-sm btn-outline-danger remove-question">Удалить</button>
+                    {% else %}
+                      <small class="text-muted">Обязательный</small>
+                    {% endif %}
+                  </div>
+
+                  <!-- Текст вопроса -->
+                  <div class="mb-3">
+                    {{ question_form.text }}
+                    {% if question_form.text.errors %}
+                      <div class="text-danger small">{{ question_form.text.errors }}</div>
+                    {% endif %}
+                  </div>
+
+                  <!-- Приоритет -->
+                  <div class="mb-3">
+                    {{ question_form.priority.label_tag }}
+                    {{ question_form.priority }}
+                    {% if question_form.priority.errors %}
+                      <div class="text-danger small">{{ question_form.priority.errors }}</div>
+                    {% endif %}
+                  </div>
+
+                  <!-- Варианты ответов -->
+                  <h6 class="mt-3 mb-2">Варианты ответов (минимум 2)</h6>
+                  {{ question_form.answers.management_form }}
+                  <div class="answers-container">
+                    {% for answer_form in question_form.answers %}
+                      <div class="answer-option d-flex gap-2 mb-2 align-items-center">
+                        <!-- Текст ответа -->
+                        <div style="flex: 1;">
+                          {{ answer_form.text }}
+                          {% if answer_form.text.errors %}
+                            <div class="text-danger small">{{ answer_form.text.errors }}</div>
+                          {% endif %}
+                        </div>
+
+                        <!-- Приоритет -->
+                        <div style="width: 100px;">
+                          {{ answer_form.priority }}
+                          {% if answer_form.priority.errors %}
+                            <div class="text-danger small">{{ answer_form.priority.errors }}</div>
+                          {% endif %}
+                        </div>
+
+                        <!-- Удаление ответа -->
+                        {% if forloop.counter > 2 %}
+                          <button type="button" class="btn btn-sm btn-danger" onclick="removeAnswer(this)">✕</button>
+                        {% else %}
+                          <span class="text-muted">—</span>
+                        {% endif %}
+
+                        <!-- Скрытые поля формы -->
+                        {{ answer_form.id }}
+                        {% if answer_form.DELETE %}{{ answer_form.DELETE }}{% endif %}
+                      </div>
+                    {% endfor %}
+                  </div>
+
+                  <!-- Кнопка добавления варианта -->
+                  <button type="button" class="add-answer btn btn-sm btn-outline-success mt-1">
+                    + Добавить вариант ответа
+                  </button>
+                </div>
+              {% endfor %}
+            </div>
+
+            <!-- Кнопка добавления нового вопроса -->
+            <button type="button" class="add-question btn btn-outline-primary mb-4">
+              + Добавить ещё вопрос
+            </button>
+
+            <!-- Кнопки управления -->
+            <div class="d-flex justify-content-between mt-4">
+              <a href="{% url 'surveys:index' %}" class="btn btn-outline-secondary">← Назад</a>
+              <button type="submit" class="btn btn-primary px-4">Сохранить изменения</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function getEmptyQuestionForm(index) {
+    return (
+      `<div class="question-form border p-3 mb-3 bg-light rounded" data-question-index="${index}">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <strong>Вопрос</strong>
+          <button type="button" class="btn btn-sm btn-outline-danger remove-question">Удалить</button>
+        </div>
+        <div class="mb-3">
+          <textarea name="questions-${index}-text" class="form-control" rows="2" placeholder="Введите текст вопроса" required></textarea>
+        </div>
+        <div class="mb-3">
+          <label>Приоритет</label>
+          <input type="number" name="questions-${index}-priority" value="0" class="form-control" />
+        </div>
+        <h6 class="mt-3 mb-2">Варианты ответов (минимум 2)</h6>
+        <div class="answers-container">
+          <div class="answer-option d-flex gap-2 mb-2 align-items-center">
+            <div style="flex: 1;">
+              <input type="text" name="questions-${index}-answers-0-text" class="form-control" placeholder="Вариант 1" required />
+            </div>
+            <div style="width: 100px;">
+              <input type="number" name="questions-${index}-answers-0-priority" value="0" class="form-control" placeholder="Приоритет" />
+            </div>
+            <span class="text-muted">—</span>
+          </div>
+          <div class="answer-option d-flex gap-2 mb-2 align-items-center">
+            <div style="flex: 1;">
+              <input type="text" name="questions-${index}-answers-1-text" class="form-control" placeholder="Вариант 2" required />
+            </div>
+            <div style="width: 100px;">
+              <input type="number" name="questions-${index}-answers-1-priority" value="0" class="form-control" placeholder="Приоритет" />
+            </div>
+            <span class="text-muted">—</span>
+          </div>
+        </div>
+        <button type="button" class="add-answer btn btn-sm btn-outline-success mt-1">+ Добавить вариант ответа</button>
+      </div>`
+    );
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const totalFormsInput = document.querySelector('#id_questions-TOTAL_FORMS');
+    if (!totalFormsInput) return;
+
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-question')) {
+            const container = document.getElementById('questions-container');
+            const currentIndex = parseInt(totalFormsInput.value);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = getEmptyQuestionForm(currentIndex);
+            container.appendChild(tempDiv.firstElementChild);
+            totalFormsInput.value = currentIndex + 1;
+        }
+        if (e.target.classList.contains('remove-question')) {
+            const questionForms = document.querySelectorAll('.question-form');
+            e.target.closest('.question-form').remove();
+
+        }
+        if (e.target.classList.contains('add-answer')) {
+            const questionDiv = e.target.closest('.question-form');
+            const answersContainer = e.target.previousElementSibling;
+            const questionIndex = questionDiv.dataset.questionIndex;
+            const existingAnswers = answersContainer.querySelectorAll('.answer-option');
+            const nextAnswerIndex = existingAnswers.length;
+
+            const newAnswer = document.createElement('div');
+            newAnswer.className = 'answer-option d-flex gap-2 mb-2 align-items-center';
+            newAnswer.innerHTML = (
+              `<div style="flex: 1;">
+                <input type="text" name="questions-${questionIndex}-answers-${nextAnswerIndex}-text"
+                       class="form-control" placeholder="Новый вариант" required />
+              </div>
+              <div style="width: 100px;">
+                <input type="number" name="questions-${questionIndex}-answers-${nextAnswerIndex}-priority"
+                       value="0" class="form-control" placeholder="Приоритет" />
+              </div>
+              <button type="button" class="btn btn-sm btn-danger" onclick="removeAnswer(this)">✕</button>
+            </div>`
+            );
+
+            answersContainer.appendChild(newAnswer);
+        }
+    });
+});
+
+function removeAnswer(button) {
+    const answersContainer = button.closest('.answers-container');
+    const answerOptions = answersContainer.querySelectorAll('.answer-option');
+    button.closest('.answer-option').remove();
+
+}
+</script>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Опросы{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <h2 class="text-center mb-4">Список опросов</h2>
+
+      {% if page_obj %}
+        <ul class="list-group mb-4">
+          {% for survey in page_obj %}
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="text-truncate" style="flex: 1;">
+                <a href="{% url 'surveys:edit' survey.uid %}" class="text-decoration-none text-dark fw-medium">
+                  {{ survey.title }}
+                </a>
+              </div>
+              <div class="text-center mx-4" style="min-width: 110px;">
+                <small class="d-block text-muted">Вопросов: {{ survey.questions_count }}</small>
+              </div>
+              <div class="text-center mx-4" style="min-width: 120px;">
+                <small class="d-block text-muted">Прохождений: {{ survey.completing_count }}</small>
+              </div>
+              <div class="text-end" style="min-width: 150px;">
+                <small class="text-muted">Автор: {{ survey.author.username }}</small>
+              </div>
+              <div class="ms-3">
+                <a href="{% url 'surveys:start_completing' survey.uid %}" class="btn btn-sm btn-outline-primary">
+                  Пройти опрос
+                </a>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+
+        {% if page_obj.has_other_pages %}
+          <nav aria-label="Pagination">
+            <ul class="pagination justify-content-center">
+              {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Назад</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">Назад</span>
+                </li>
+              {% endif %}
+
+              {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                  <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                  </li>
+                {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}">Вперед</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">Вперед</span>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      {% else %}
+        <p class="text-center text-muted">Опросов пока нет.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

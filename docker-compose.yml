@@ -1,0 +1,26 @@
+volumes:
+  pg_data:
+  static:
+  media:
+
+services:
+  postgres:
+    image: postgres:16
+    env_file: .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./questions/
+    env_file: .env
+    volumes:
+      - static:/backend_static
+    depends_on:
+      - postgres
+
+  gateway:
+    build: ./nginx/
+    volumes:
+      - static:/staticfiles/
+    ports:
+      - 8000:80
