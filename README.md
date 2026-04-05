@@ -3,6 +3,7 @@
 ## Технологический стек
 - Python3.11
 - Django5.2
+- PostgreSQL.16
 
 ## Запуск в DEV режиме
 - `python -m venv venv`
@@ -11,6 +12,9 @@
 - `python manage.py migrate`
 - `python manage.py createsuperuser` - Для доступа к админке
 - `python manage.py runserver` - Запускает сервер на localhost с портом 8000
+
+## Запуск через Docker compose
+- `./start.sh` - скрипт запускает контейнеры postgers, nginx и django, проводит миграции и создает администратора (его нужно ввести в консоль)
 
 ## Модели данных
 - Survey - Основная модель опроса, содержит ссылку на автора, заголовок опроса, дату его создания и последнего обновления
@@ -26,7 +30,7 @@
 - "survey/<str:uid>/complete" Завершение опроса
 - "survey/<str:uid>/question/<int:q_id>/answer" Добавление ответа на вопрос
 - "survey/<str:uid>/edit" Изменение опроса
+- "/admin" - Страница администрирования
 
 ## Авторизация
 - /admin/login
-
